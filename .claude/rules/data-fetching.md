@@ -59,11 +59,11 @@ A write is `useMutation({ mutationFn })` at the call site, and the `mutationFn` 
 
 ## The API this app talks to
 
-`src/mocks/handlers.ts` answers every request in `pnpm dev` and in every test, so it is the API contract as this repository holds it. It stays outside the slices, because one file showing every endpoint is what makes the contract readable, and it imports each slice's schema rather than restating a shape.
+`app/api/notes/route.ts` is the API as deployed: a Route Handler that serves `/api/notes` from the in-memory rows in `app/api/notes/store.ts`, so the rows live as long as one server instance does. `src/mocks/handlers.ts` answers every request in `pnpm dev` and in every test by calling that Route Handler's `GET` and `POST`, so the mocks and the deployed API cannot answer differently. It imports each slice's schema rather than restating a shape.
 
 - **A handler and the schema it satisfies change in the same commit.** A handler that returns a shape the real API never sends makes the whole suite green against a fiction.
 - **The handler validates the request body with the same schema the form uses**, so a field the form lets through and the API would reject fails here instead of in production.
-- `src/mocks/db.ts` holds the rows between requests, and `src/test-setup.ts` resets them and the handler overrides after each test. A test that needs a different answer calls `server.use(...)` and leaves the reset to the teardown.
+- `app/api/notes/store.ts` holds the rows between requests, and `src/test-setup.ts` resets them and the handler overrides after each test. A test that needs a different answer calls `server.use(...)` and leaves the reset to the teardown.
 - Nothing under `src/mocks/` reaches the production bundle. `app/providers.tsx` dynamically imports the browser worker inside `process.env.NODE_ENV === "development"`, which Next.js dead-code-eliminates in production builds. `instrumentation.ts` starts the Node server in `pnpm dev` so Server Component fetch calls are also intercepted. `src/test-setup.ts` starts the Node server for tests.
 
 ## Checklist
